@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: devpulse-api
+    runtime: node
+    region: oregon
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: node dist/app.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: DATABASE_PATH
+        value: data/devpulse.db
+    healthCheckPath: /api/health
+
+databases:
+  - name: devpulse-db
+    plan: free
