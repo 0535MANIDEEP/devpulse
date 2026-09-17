@@ -34,7 +34,7 @@ export function useWebSocket(options: UseWebSocketOptions) {
   const connect = useCallback(() => {
     if (socketRef.current?.connected) return;
 
-    const socket = io(window.location.origin, {
+    const socket = io(import.meta.env.VITE_API_URL || window.location.origin, {
       path: '/socket.io',
       transports: ['websocket', 'polling']
     });
