@@ -1,11 +1,18 @@
 import axios from 'axios';
 
+
+const API_BASE_URL = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/api`
+  : '/api';
+
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json'
   }
 });
+
 
 export interface Monitor {
   id: number;
@@ -23,6 +30,7 @@ export interface Monitor {
   avg_response_time: number | null;
 }
 
+
 export interface Check {
   id: number;
   monitor_id: number;
@@ -33,6 +41,7 @@ export interface Check {
   checked_at: string;
 }
 
+
 export interface Incident {
   id: number;
   monitor_id: number;
@@ -40,6 +49,7 @@ export interface Incident {
   resolved_at: string | null;
   error_message: string | null;
 }
+
 
 export interface MonitorStats {
   status: 'up' | 'down' | 'unknown';
@@ -50,6 +60,7 @@ export interface MonitorStats {
   };
   recentIncidents: Incident[];
 }
+
 
 export const monitorsApi = {
   list: (activeOnly?: boolean) => 
@@ -68,19 +79,23 @@ export const monitorsApi = {
     api.delete(`/monitors/${id}`)
 };
 
+
 export const checksApi = {
   list: (monitorId: number, params?: { limit?: number; offset?: number; from?: string; to?: string }) =>
     api.get<Check[]>(`/monitors/${monitorId}/checks`, { params })
 };
+
 
 export const incidentsApi = {
   list: (monitorId: number) =>
     api.get<Incident[]>(`/monitors/${monitorId}/incidents`)
 };
 
+
 export const statsApi = {
   get: (monitorId: number) =>
     api.get<MonitorStats>(`/monitors/${monitorId}/stats`)
 };
+
 
 export default api;
