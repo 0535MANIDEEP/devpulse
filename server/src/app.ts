@@ -2,6 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import { initDb } from './db';
 import monitorsRouter from './routes/monitors';
+import checksRouter from './routes/checks';
+import incidentsRouter from './routes/incidents';
+import statsRouter from './routes/stats';
 import { errorHandler } from './middleware/errorHandler';
 import { startScheduler } from './services/scheduler';
 
@@ -16,6 +19,9 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.use('/api/monitors', monitorsRouter);
+app.use('/api/monitors', checksRouter);
+app.use('/api/monitors', incidentsRouter);
+app.use('/api/monitors', statsRouter);
 
 app.use(errorHandler);
 
