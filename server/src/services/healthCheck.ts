@@ -2,6 +2,7 @@ import http from 'http';
 import https from 'https';
 import { getDb, saveDb } from '../db';
 import { Monitor } from '../types';
+import { emitCheckCompleted, emitIncidentCreated, emitIncidentResolved } from '../socket';
 
 interface HealthCheckResult {
   monitorId: number;
@@ -103,6 +104,16 @@ export async function healthCheck(monitor: Monitor): Promise<HealthCheckResult> 
            VALUES (?, ?, ?)`,
           [monitor.id, now, `Expected status ${monitor.expected_status}, got ${result.statusCode}`]
         );
+        
+        const incidentResult = db.exec('SELECT last_insert_rowid()');
+        const incidentId = incidentResult[0].values[0][0] as number;
+        
+        emitIncidentCreated({
+          monitorId: monitor.id,
+          incidentId,
+          errorMessage: `Expected status ${monitor.expected_status}, got ${result.statusCode}`,
+          startedAt: now
+        });
       }
     } else {
       const openIncident = db.exec(
@@ -113,15 +124,29 @@ export async function healthCheck(monitor: Monitor): Promise<HealthCheckResult> 
       );
 
       if (openIncident.length > 0 && openIncident[0].values.length > 0) {
-        const incidentId = openIncident[0].values[0][0];
+        const incidentId = openIncident[0].values[0][0] as number;
         db.run(
           `UPDATE incidents SET resolved_at = ? WHERE id = ?`,
           [now, incidentId]
         );
+        
+        emitIncidentResolved({
+          monitorId: monitor.id,
+          incidentId,
+          resolvedAt: now
+        });
       }
     }
 
     saveDb();
+
+    emitCheckCompleted({
+      monitorId: monitor.id,
+      status: result.statusCode,
+      responseTime: result.responseTimeMs,
+      isCheckedAt: now,
+      isSuccess: isSuccess === 1
+    });
 
     return {
       monitorId: monitor.id,
@@ -153,9 +178,27 @@ export async function healthCheck(monitor: Monitor): Promise<HealthCheckResult> 
          VALUES (?, ?, ?)`,
         [monitor.id, now, errorMessage]
       );
+      
+      const incidentResult = db.exec('SELECT last_insert_rowid()');
+      const incidentId = incidentResult[0].values[0][0] as number;
+      
+      emitIncidentCreated({
+        monitorId: monitor.id,
+        incidentId,
+        errorMessage,
+        startedAt: now
+      });
     }
 
     saveDb();
+
+    emitCheckCompleted({
+      monitorId: monitor.id,
+      status: null,
+      responseTime: 0,
+      isCheckedAt: now,
+      isSuccess: false
+    });
 
     return {
       monitorId: monitor.id,
