@@ -1,0 +1,11 @@
+﻿{
+  "rootDirectory": "client",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "https://devpulse-ne8a.onrender.com/api/$1" },
+    { "source": "/socket.io/(.*)", "destination": "https://devpulse-ne8a.onrender.com/socket.io/$1" },
+    { "source": "/((?!assets/).*)", "destination": "/index.html" }
+  ]
+}
